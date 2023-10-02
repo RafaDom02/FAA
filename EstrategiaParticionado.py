@@ -65,14 +65,15 @@ class ValidacionCruzada(EstrategiaParticionado):
   # Esta funcion devuelve una lista de particiones (clase Particion)
   # TODO: implementar
   def creaParticiones(self,datos,seed=None):   
-    random.seed(seed)
-    
-    sublists = np.array_split(datos, self.numeroParticiones)
+    part_length = len(datos) // self.numeroParticiones
+
+    data_sublists = [datos[i:i + part_length] for i in range(0, len(datos), part_length)]
  
     for i in range(0,self.numeroParticiones):
+      random.seed(seed)
       part = Particion()
-      part.indicesTest.append(sublists[i].index)
-      part.indicesTrain.append(datos.drop(sublists[i].index).index)
+      part.indicesTest.append(data_sublists[i].index)
+      part.indicesTrain.append(datos.drop(data_sublists[i].index).index)
       self.particiones.append(part)
 
 
