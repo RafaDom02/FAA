@@ -15,7 +15,9 @@ class EstrategiaParticionado:
   
   # Clase abstracta
   __metaclass__ = ABCMeta
-  particiones = []
+
+  def __init__(self) -> None:
+    self.particiones = []
   
   # Atributos: deben rellenarse adecuadamente para cada estrategia concreta. Se pasan en el constructor 
   
@@ -28,12 +30,10 @@ class EstrategiaParticionado:
 #####################################################################################################
 
 class ValidacionSimple(EstrategiaParticionado):
-  
-  proporcionTest = 0.0
-  numeroEjecuciones = 0
 
   # Crea particiones segun el metodo tradicional de division de los datos segun el porcentaje deseado y el n�mero de ejecuciones deseado
   def __init__(self, numeroEjecuciones: int, proporcionTest: float) -> None:
+    super().__init__()
     self.numeroEjecuciones = numeroEjecuciones
     self.proporcionTest = proporcionTest
     
@@ -54,11 +54,10 @@ class ValidacionSimple(EstrategiaParticionado):
       
 #####################################################################################################      
 class ValidacionCruzada(EstrategiaParticionado):
-  
-  numeroParticiones = 0
 
   # Crea particiones segun el metodo de validacion cruzada.
   def __init__(self, numeroParticiones: int) -> None:
+    super().__init__()
     self.numeroParticiones = numeroParticiones
 
   # El conjunto de entrenamiento se crea con las nfolds-1 particiones y el de test con la particion restante

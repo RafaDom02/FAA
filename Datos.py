@@ -8,12 +8,11 @@ import os
 
 class Datos:
 
-    diccionarios = {}
-    nominalAtributos = []
-    datos = None
-
     # Constructor: procesar el fichero para asignar correctamente las variables nominalAtributos, datos y diccionarios
-    def __init__(self, nombreFichero):  
+    def __init__(self, nombreFichero): 
+        self.diccionarios = {}
+        self.nominalAtributos = []
+        self.datos = None 
         # Carga el fichero de datos
         self.datos = pd.read_csv(nombreFichero)
 
