@@ -6,8 +6,8 @@ class Particion():
 
   # Esta clase mantiene la lista de �ndices de Train y Test para cada partici�n del conjunto de particiones  
   def __init__(self):
-    self.indicesTrain=[]
-    self.indicesTest=[]
+    self.indicesTrain=None
+    self.indicesTest=None
 
 #####################################################################################################
 
@@ -47,8 +47,8 @@ class ValidacionSimple(EstrategiaParticionado):
       test = datos.sample(frac = self.proporcionTest)
       train = datos.drop(test.index)
 
-      part.indicesTest.append(test.index)
-      part.indicesTrain.append(train.index)
+      part.indicesTest = test.index
+      part.indicesTrain = train.index
       self.particiones.append(part)
             
       
@@ -71,8 +71,8 @@ class ValidacionCruzada(EstrategiaParticionado):
     for i in range(0,self.numeroParticiones):
       random.seed(seed)
       part = Particion()
-      part.indicesTest.append(data_sublists[i].index)
-      part.indicesTrain.append(datos.drop(data_sublists[i].index).index)
+      part.indicesTest = data_sublists[i].index
+      part.indicesTrain = datos.drop(data_sublists[i].index).index
       self.particiones.append(part)
 
 
