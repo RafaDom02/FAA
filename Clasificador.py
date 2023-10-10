@@ -1,4 +1,6 @@
 from abc import ABCMeta,abstractmethod
+import math
+import random
 import numpy as np
 import pandas as pd
 
@@ -35,7 +37,7 @@ class Clasificador:
   def error(self,datos,pred):
     # Aqui se compara la prediccion (pred) con las clases reales y se calcula el error
     # devuelve el error
-    pass
+    return 1-sum(datos == pred)/len(pred)
     
     
   # Realiza una clasificacion utilizando una estrategia de particionado determinada
@@ -57,7 +59,23 @@ class Clasificador:
     #     entrenar sobre los datos de train
     #     obtener prediciones de los datos de test (llamando a clasifica)
     #     a�adir error de la partici�n al vector de errores
-    pass  
+    random.seed(seed)
+    np.random.shuffle(dataset.datos)
+    particionado.creaParticionado(dataset.datos,seed)
+    errores = []
+    
+    for part in particionado:
+      datTrain = dataset.datos[part.indicesTrain, :]
+      datTest = dataset.datos[part.indicesTest, :]
+      
+      clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionario)
+      pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionario)
+      
+      error = clasificador.error(datTest[:-1], pred)
+      errores.append(error)
+    
+    return errores
+
 
 class ClasificadorNaiveBayes (Clasificador):
   def __init__(self, LaPlace: bool):
@@ -66,36 +84,61 @@ class ClasificadorNaiveBayes (Clasificador):
     self.trainData = []
 
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
-    probsClase = {}
+    data_wo_lastColumn = datosTrain[:,:-1]
+    data_lastColumn = datosTrain[:,-1]
+    n_classes = len(diccionario[-1])
     # datosTrain (dataframe) get average of the last column of the dataframe
     self.prioris = datosTrain.iloc[:, -1].value_counts(normalize=True)
-    condicionales = []
 
-    for i in range(datosTrain.shape[1]-1):
-      # obtener las probabilidades condicionales de datosTrain
+    for i in range(data_wo_lastColumn.shape[1]):
       if nominalAtributos[i] == True:
-        tabla = np.zeros(len(diccionario[i]), len(diccionario[-1]))
-        for row in datosTrain:
-          fila = int(row[i])
-          columna = int(row[-1])
-          tabla[fila][columna] += 1
-        if self.LaPlace and np.any(tabla==0):
+        tabla = np.zeros((len(diccionario[i]), len(diccionario[-1])))
+        for value in diccionario[i]:
+          val_id = diccionario[i][value]
+          for cl in diccionario[-1]:
+            cl_id = diccionario[-1][cl]
+            tabla[val_id][cl_id] = sum((data_wo_lastColumn[:,i] == val_id)&(data_lastColumn[:,i] == cl_id)) \
+            											/sum(data_lastColumn == cl_id)
+        if self.LaPlace and 0 in tabla:
           tabla+=1
-        sums = np.sum(tabla, axis=0)
-        tabla /= sums
       else:
-        tabla = np.zeros(2, len(diccionario[-1]))
-        for key in diccionario[-1].keys():
-          val = int(diccionario[-1][key])
-          tabla[0, val] = np.mean(datosTrain[:, i]) 
-          tabla[1, val] = np.std(datosTrain[:,i])
-      self.trainData.append(tabla)
+        tabla = np.zeros((n_classes, 2))
+        for cl in diccionario[-1]:
+          cl_id = diccionario[-1][cl]
+          
+          m_sum = sum(elem for (id, elem) in enumerate(data_wo_lastColumn[:,i]) if data_lastColumn[id]==cl_id)
+          m_cl = m_sum/sum(data_lastColumn == cl_id)
+          
+          var_sum = sum((elem-m_cl)**2 for (id, elem) in enumerate(data_wo_lastColumn[:,i]) if data_lastColumn[id]==cl_id)
+          var_cl = var_sum/sum(data_lastColumn == cl_id)
+          
+          tabla[cl_id][0] = m_cl
+          tabla[cl_id][1] = var_cl
+          
+				
+          
+            
+        
+        
 
 
     
 
   def clasifica(self,datosTest,nominalAtributos,diccionario):
-    pass
+    for datos in datosTest:
+      for key in diccionario[-1].keys():
+        val = diccionario[-1][key]
+        p = 1
+        for i in range(len(datos)-1):
+          if nominalAtributos[i] == True:
+            ver = self.trainData[i][int(datos[i]), val]
+            evi = sum(self.trainData[i][:, val])
+            p*=(ver / evi)
+          else:
+            #
+            sqrt = math.sqrt(2*math.pi*self.trainData[i][1,val])
+            #e^(-(valor-media)^2)/2*desviacion)
+            exp = math.exp(-1*pow(datos[i]-self.trainData[i][0,val], 2))/(2*self.trainData[i][1,val])
   
 
 
