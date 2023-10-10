@@ -42,7 +42,7 @@ class Clasificador:
     
   # Realiza una clasificacion utilizando una estrategia de particionado determinada
   # TODO: implementar esta funcion
-  def validacion(self,particionado,dataset,clasificador,seed=None):
+  def validacion(self,particionado,dataset: Datos,clasificador,seed=None):
     # Creamos las particiones siguiendo la estrategia llamando a particionado.creaParticiones
     # - Para validacion cruzada: en el bucle hasta nv entrenamos el clasificador con la particion de train i
     # y obtenemos el error en la particion de test i
@@ -60,13 +60,13 @@ class Clasificador:
     #     obtener prediciones de los datos de test (llamando a clasifica)
     #     a�adir error de la partici�n al vector de errores
     random.seed(seed)
-    np.random.shuffle(dataset.datos)
-    particionado.creaParticionado(dataset.datos,seed)
+    #np.random.shuffle(dataset.datos)
+    particionado.creaParticiones(dataset.datos,seed)
     errores = []
     
-    for part in particionado:
-      datTrain = dataset.datos[part.indicesTrain, :]
-      datTest = dataset.datos[part.indicesTest, :]
+    for part in particionado.particiones:
+      datTrain = dataset.datos.loc(part.indicesTrain.to_list())
+      datTest = dataset.datos.loc(part.indicesTest.to_list())
       
       clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionario)
       pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionario)
@@ -78,18 +78,21 @@ class Clasificador:
 
 
 class ClasificadorNaiveBayes (Clasificador):
-  def __init__(self, LaPlace: bool):
+  def __init__(self, LaPlace: bool = False):
     self.LaPlace = LaPlace
     self.prioris = None
     self.trainData = []
 
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
-    data_wo_lastColumn = datosTrain[:,:-1]
-    data_lastColumn = datosTrain[:,-1]
-    n_classes = len(diccionario[-1])
-    # datosTrain (dataframe) get average of the last column of the dataframe
-    self.prioris = datosTrain.iloc[:, -1].value_counts(normalize=True)
+    data_wo_lastColumn = datosTrain[:,:-1] #Data train sin la columna de las clases :(
+    data_lastColumn = datosTrain[:,-1] #Columna de las classes :)
+    n_classes = len(diccionario[-1]) #Numero de clases con las que tratamos 
 
+    self.prioris = datosTrain.iloc[:, -1].value_counts(normalize=True) #Los prioris
+    """for key in diccionario[-1].keys():
+      aux = diccionario[-1][key]
+      self.prioris = aux"""
+    
     for i in range(data_wo_lastColumn.shape[1]):
       if nominalAtributos[i] == True:
         tabla = np.zeros((len(diccionario[i]), len(diccionario[-1])))
@@ -99,7 +102,7 @@ class ClasificadorNaiveBayes (Clasificador):
             cl_id = diccionario[-1][cl]
             tabla[val_id][cl_id] = sum((data_wo_lastColumn[:,i] == val_id)&(data_lastColumn[:,i] == cl_id)) \
             											/sum(data_lastColumn == cl_id)
-        if self.LaPlace and 0 in tabla:
+        if self.LaPlace and np.any(tabla == 0):
           tabla+=1
       else:
         tabla = np.zeros((n_classes, 2))
@@ -114,19 +117,18 @@ class ClasificadorNaiveBayes (Clasificador):
           
           tabla[cl_id][0] = m_cl
           tabla[cl_id][1] = var_cl
+
+          self.trainData.append(tabla)
           
-				
+    self.trainData = np.asarray(self.trainData, dtype="object")
           
             
-        
-        
-
-
-    
 
   def clasifica(self,datosTest,nominalAtributos,diccionario):
+    predicciones = []
     for datos in datosTest:
-      for key in diccionario[-1].keys():
+      prioriDict = {}
+      for j,key in enumerate(diccionario[-1].keys()):
         val = diccionario[-1][key]
         p = 1
         for i in range(len(datos)-1):
@@ -139,7 +141,14 @@ class ClasificadorNaiveBayes (Clasificador):
             sqrt = math.sqrt(2*math.pi*self.trainData[i][1,val])
             #e^(-(valor-media)^2)/2*desviacion)
             exp = math.exp(-1*pow(datos[i]-self.trainData[i][0,val], 2))/(2*self.trainData[i][1,val])
-  
+            p*=(sqrt/exp)
+        
+        p*=self.prioris[j]
+        prioriDict[key]=p
+      max_class = max(prioriDict, key=lambda k: prioriDict[k])
+      predicciones.append(max_class)
+    return np.array(predicciones)
+
 
 
 class ClasificadorKNN (Clasificador):
