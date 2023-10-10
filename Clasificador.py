@@ -65,11 +65,11 @@ class Clasificador:
     errores = []
     
     for part in particionado.particiones:
-      datTrain = dataset.datos.loc(part.indicesTrain.to_list())
-      datTest = dataset.datos.loc(part.indicesTest.to_list())
+      datTrain = dataset.extraeDatos(part.indicesTrain)
+      datTest = dataset.extraeDatos(part.indicesTest)
       
-      clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionario)
-      pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionario)
+      clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionarios)
+      pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionarios)
       
       error = clasificador.error(datTest[:-1], pred)
       errores.append(error)
@@ -82,7 +82,7 @@ class ClasificadorNaiveBayes (Clasificador):
     self.LaPlace = LaPlace
     self.prioris = None
     self.trainData = []
-
+ 
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
     data_wo_lastColumn = datosTrain[:,:-1] #Data train sin la columna de las clases :(
     data_lastColumn = datosTrain[:,-1] #Columna de las classes :)
