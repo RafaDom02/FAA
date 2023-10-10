@@ -41,7 +41,6 @@ class Clasificador:
   # Realiza una clasificacion utilizando una estrategia de particionado determinada
   # TODO: implementar esta funcion
   def validacion(self,particionado,dataset,clasificador,seed=None):
-       
     # Creamos las particiones siguiendo la estrategia llamando a particionado.creaParticiones
     # - Para validacion cruzada: en el bucle hasta nv entrenamos el clasificador con la particion de train i
     # y obtenemos el error en la particion de test i
@@ -63,26 +62,36 @@ class Clasificador:
 class ClasificadorNaiveBayes (Clasificador):
   def __init__(self, LaPlace: bool):
     self.LaPlace = LaPlace
+    self.prioris = None
+    self.trainData = []
+
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
     probsClase = {}
     # datosTrain (dataframe) get average of the last column of the dataframe
-    priori_class = datosTrain.iloc[:, -1].value_counts(normalize=True)
+    self.prioris = datosTrain.iloc[:, -1].value_counts(normalize=True)
     condicionales = []
-    print(priori_class)
-
-    print(datosTrain.shape[0])
-    print(datosTrain.shape[1])
 
     for i in range(datosTrain.shape[1]-1):
       # obtener las probabilidades condicionales de datosTrain
       if nominalAtributos[i] == True:
-        tabla = np.zeros(len(diccionario[i]), len(diccionario[i])-1)
+        tabla = np.zeros(len(diccionario[i]), len(diccionario[-1]))
         for row in datosTrain:
           fila = int(row[i])
           columna = int(row[-1])
           tabla[fila][columna] += 1
+        if self.LaPlace and np.any(tabla==0):
+          tabla+=1
+        sums = np.sum(tabla, axis=0)
+        tabla /= sums
       else:
-        pass
+        tabla = np.zeros(2, len(diccionario[-1]))
+        for key in diccionario[-1].keys():
+          val = int(diccionario[-1][key])
+          tabla[0, val] = np.mean(datosTrain[:, i]) 
+          tabla[1, val] = np.std(datosTrain[:,i])
+      self.trainData.append(tabla)
+
+
     
 
   def clasifica(self,datosTest,nominalAtributos,diccionario):
