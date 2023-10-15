@@ -41,6 +41,8 @@ class ValidacionSimple(EstrategiaParticionado):
   # Devuelve una lista de particiones (clase Particion)
   # TODO: implementar
   def creaParticiones(self,datos,seed=None):
+    if len(self.particiones) != 0:
+      return
     for _ in range(0,self.numeroEjecuciones):
       random.seed(seed)
       part = Particion()
@@ -63,7 +65,9 @@ class ValidacionCruzada(EstrategiaParticionado):
   # El conjunto de entrenamiento se crea con las nfolds-1 particiones y el de test con la particion restante
   # Esta funcion devuelve una lista de particiones (clase Particion)
   # TODO: implementar
-  def creaParticiones(self,datos,seed=None):   
+  def creaParticiones(self,datos,seed=None):  
+    if len(self.particiones) != 0:
+      return 
     part_length = len(datos) // self.numeroParticiones
 
     data_sublists = [datos[i:i + part_length] for i in range(0, len(datos), part_length)]

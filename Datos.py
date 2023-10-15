@@ -51,7 +51,7 @@ class Datos:
 
         for key in keys:
             for dict_key in self.diccionarios[key].keys():
-               self.datos[key] = self.datos[key].replace([dict_key], self.diccionarios[key][dict_key])
+                self.datos[key] = self.datos[key].replace([dict_key], self.diccionarios[key][dict_key])
 
         aux_dict_type = {}
         for key in keys:
@@ -60,5 +60,5 @@ class Datos:
         self.datos=self.datos.astype(aux_dict_type)
     
     # Devuelve el subconjunto de los datos cuyos �ndices se pasan como argumento
-    def extraeDatos(self,idx):
-        return [self.datos.iloc[i] for i in idx]
+    def extraeDatos(self,idx) -> pd.DataFrame:
+        return self.datos.iloc[idx]
