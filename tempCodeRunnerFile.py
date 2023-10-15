@@ -1,1 +1,0 @@
-estrategiaVC.particiones[0]
