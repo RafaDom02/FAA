@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from sklearn.naive_bayes import MultinomialNB, GaussianNB
+
 from Datos import Datos
-import EstrategiaParticionado
 
 class Clasificador:
   
@@ -61,10 +62,9 @@ class Clasificador:
     #     obtener prediciones de los datos de test (llamando a clasifica)
     #     a�adir error de la partici�n al vector de errores
     random.seed(seed)
-    #np.random.shuffle(dataset.datos)
     particionado.creaParticiones(dataset.datos,seed)
     errores = []
-    print("Numero de particiones:", len(particionado.particiones))
+    print("Numero de particiones realizadas:", len(particionado.particiones))
     for part in particionado.particiones:
       datTrain = dataset.extraeDatos(part.indicesTrain)
       datTest = dataset.extraeDatos(part.indicesTest)
@@ -79,60 +79,88 @@ class Clasificador:
 
 class ClasificadorNaiveBayes (Clasificador):
   def __init__(self, LaPlace: bool = False):
-    self.LaPlace = LaPlace
-    self.prioris = None
-    self.trainData = []
-    self.likelihoods = None
+    self.LaPlace = LaPlace  # Guarda si se usa La Place en el entrenamiento
+    self.prioris = None     # Guarda los prioris de los datos
+    self.likelihoods = None # Guarda los likelihoods obtenidos en el entrenamiento
 
   def _multinomialNB(self, x_dat: pd.DataFrame, y_dat: pd.DataFrame, idx: int, diccionario: dict):
-        n_xi = len(diccionario[list(diccionario.keys())[idx]])
-        n_classes = len(diccionario['Class'])
-        tabla = np.zeros((n_xi, n_classes))
-        for value in diccionario[list(diccionario.keys())[idx]]:
-            val_idx = diccionario[list(diccionario.keys())[idx]][value]
-            for class_name in diccionario['Class']:
-                class_idx = diccionario['Class'][class_name]
-                tabla[val_idx, class_idx] = sum((x_dat.iloc[:,idx] == val_idx)&(y_dat == class_idx))/sum(y_dat == class_idx)
+    """
+    Parte del entrenamiento que se encarga de los datos multinomiales para Naive Bayes
 
-        if self.LaPlace and np.any(tabla == 0):
-            tabla += np.ones((n_xi, n_classes))
+    Args:
+        x_dat (pd.DataFrame): Con los datos sin la columna clases
+        y_dat (pd.DataFrame): Con la columna clases
+        idx (int): indice
+        diccionario (dict): diccionario de la clase Datos
 
-        return tabla
-
-  def _gaussianNB(self, x_dat, y_dat, idx, diccionario):
-        n_classes = len(diccionario['Class'])
-
-        tabla = np.zeros((n_classes, 2)) # 2 columns: mean and variance for each class
-
+    Returns:
+        NDArray: Contiene la tabla con los valores obtenidos, se aplica La Place si su flag esta a True y hay 1 valor 0 
+    """        
+    n_xidx = len(diccionario[list(diccionario.keys())[idx]])
+    n_classes = len(diccionario['Class'])
+    tabla = np.zeros((n_xidx, n_classes))
+    for value in diccionario[list(diccionario.keys())[idx]]:
+        val_idx = diccionario[list(diccionario.keys())[idx]][value]
         for class_name in diccionario['Class']:
             class_idx = diccionario['Class'][class_name]
-            mean_sum = sum(elem for (idx, elem) in enumerate(x_dat[:,idx]) if y_dat[idx]==class_idx)
-            mean_cl = mean_sum/sum(y_dat == class_idx)
-            variance_sum = sum((elem-mean_cl)**2 for (idx, elem) in enumerate(x_dat[:,idx]) if y_dat[idx]==class_idx)
-            variance_cl = variance_sum/sum(y_dat == class_idx)
+            tabla[val_idx, class_idx] = sum((x_dat.iloc[:,idx] == val_idx)&(y_dat == class_idx))/sum(y_dat == class_idx)
 
-            tabla[class_idx][0] = mean_cl
-            tabla[class_idx][1] = variance_cl
+    if self.LaPlace and np.any(tabla == 0):
+        print("SE EJECUTA LA PLACE!!!")
+        print(tabla, "\n")
+        tabla += np.ones((n_xidx, n_classes))
+        print(tabla, "\n")
 
-        return tabla
+    return tabla
+
+  def _gaussianNB(self, x_dat: pd.DataFrame, y_dat: pd.DataFrame, idx: int, diccionario: dict):
+    """
+    Parte del entrenamiento que se encarga de los datos gaussianos para Naive Bayes
+
+    Args:
+        x_dat (pd.DataFrame): Con los datos sin la columna clases
+        y_dat (pd.DataFrame): Con la columna clases
+        idx (int): indice
+        diccionario (dict): diccionario de la clase Datos
+
+    Returns:
+        NDArray: Contiene la tabla con los valores obtenidos guardando la media y la varianza
+    """    
+    n_classes = len(diccionario['Class'])
+
+    tabla = np.zeros((n_classes, 2)) # 2 columns: mean and variance for each class
+
+    for class_name in diccionario['Class']:
+        class_idx = diccionario['Class'][class_name]
+        mean_sum = sum(elem for (idx, elem) in enumerate(x_dat.iloc[:,idx]) if y_dat.iloc[idx]==class_idx)
+        mean_cl = mean_sum/sum(y_dat == class_idx)
+        variance_sum = sum((elem-mean_cl)**2 for (idx, elem) in enumerate(x_dat.iloc[:,idx]) if y_dat.iloc[idx]==class_idx)
+        variance_cl = variance_sum/sum(y_dat == class_idx)
+
+        tabla[class_idx][0] = mean_cl
+        tabla[class_idx][1] = variance_cl
+
+    return tabla
 
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
+    """
+    Entrena para un dataset
+
+    Args:
+        datosTrain (pd.DataFrame): Datos para el entrenamiento
+        nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
+        diccionario (dict): diccionario de la clase Datos
+    """    
     data_wo_lastColumn = datosTrain.iloc[:,:-1] #Data train sin la columna de las clases :(
-    data_lastColumn = datosTrain.iloc[:,-1] #Columna de las classes :)
+    data_lastColumn = datosTrain.iloc[:,-1]     #Columna de las classes :)
     aux = []
     self.prioris = datosTrain.iloc[:, -1].value_counts(normalize=True) #Los prioris
-    """for key in diccionario[-1].keys():
-      aux = diccionario[-1][key]
-      self.prioris = aux"""
     
     for idx in range(data_wo_lastColumn.shape[1]):
             if nominalAtributos[idx]:
-                # calculating frequentist probs for discrete features
                 tabla = self._multinomialNB(data_wo_lastColumn, data_lastColumn, idx, diccionario)
             else:
-                # calculating means and variances for continuous features
                 tabla = self._gaussianNB(data_wo_lastColumn, data_lastColumn,idx, diccionario)
-
             aux.append(tabla)
 
     self.likelihoods = np.asarray(aux, dtype="object")
@@ -140,17 +168,28 @@ class ClasificadorNaiveBayes (Clasificador):
             
 
   def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
-    data_wo_lastColumn = datosTest.iloc[:,:-1] # all rows, all columns but last one
+    """
+    Determina un dataset dado gracias a los likelihood anteriormente calculados
 
-    ndata, n_feat = data_wo_lastColumn.shape     # number of examples, number of features
-    n_classes = len(diccionario['Class'])  # number of different classes
+    Args:
+        datosTest (pd.DataFrame): datos para la clasificacion
+        nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
+        diccionario (dict): diccionario de la clase Datos
+
+    Returns:
+        NDArray: Array que contiene los resultados
+    """    
+    data_wo_lastColumn = datosTest.iloc[:,:-1]
+
+    xdata, ydata = data_wo_lastColumn.shape
+    n_classes = len(diccionario['Class'])
 
     pred = []
-    for i in range(ndata):
+    for i in range(xdata):
         classes_probs = []
         for j in range(n_classes):
             class_p = self.prioris[j]
-            for idx in range(n_feat):
+            for idx in range(ydata):
                 if nominalAtributos[idx]:
                     class_p *= self.likelihoods[idx][int(data_wo_lastColumn.iloc[i, idx])][j]
                 else:
@@ -162,7 +201,22 @@ class ClasificadorNaiveBayes (Clasificador):
 
     return np.asarray(pred, dtype="object")
 
+class ClasificadorNaiveBayesSKLearn(Clasificador):
+  def __init__(self, LaPlace=True, multinominal=True):
+    if multinominal:
+      self.clasificador = MultinomialNB(apha = int(LaPlace))
+    else:
+      self.clasificador = GaussianNB()
 
+  def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos: list, diccionario: dict):
+    data_wo_lastColumn = datosTrain.iloc[:,:-1] #Data train sin la columna de las clases :(
+    data_lastColumn = datosTrain.iloc[:,-1]     #Columna de las classes :)
+
+    self.clasificador.fit(data_wo_lastColumn, data_lastColumn)
+
+  def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
+    data_wo_lastColumn = datosTest.iloc[:,:-1] #Data train sin la columna de las clases :(
+    return self.clasificador.predict(data_wo_lastColumn)
 
 class ClasificadorKNN (Clasificador):
   def entrenamiento(self,datosTrain,nominalAtributos,diccionario):
@@ -171,9 +225,3 @@ class ClasificadorKNN (Clasificador):
   def clasifica(self,datosTest,nominalAtributos,diccionario):
     pass
   
-if __name__ == "__main__":
-  dataset=Datos('./datasets/tic-tac-toe.csv')
-  estrategiaVC = EstrategiaParticionado.ValidacionCruzada(10)
-  estrategiaVC.creaParticiones(dataset.datos)       
-  clasificador = ClasificadorNaiveBayes()
-  clasificador.entrenamiento(dataset.datos.loc[estrategiaVC.particiones[0].indicesTrain], dataset.nominalAtributos, dataset.diccionarios)
