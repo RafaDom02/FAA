@@ -287,11 +287,10 @@ class ClasificadorKNN (Clasificador):
 
   def clasifica(self,datosTest: pd.DataFrame,nominalAtributos,diccionario):
     data_wo_lastColumn = datosTest.iloc[:,:-1] #Data train sin la columna de las clases :(
-    data_lastColumn = datosTest.iloc[:,-1]     #Columna de las classes :)
     pred = []
 
-    line_test, column_test = data_wo_lastColumn.shape
-    line_train, column_train = self.train_wo_lastColumn.shape
+    line_test = data_wo_lastColumn.shape[0]
+    line_train = self.train_wo_lastColumn.shape[0]
     for idx_test in range(line_test):
       distances = []
       for idx_train in range(line_train):
