@@ -78,6 +78,13 @@ class Clasificador:
 
 
 class ClasificadorNaiveBayes (Clasificador):
+  """Clasificador de propia implementación segun el algoritmo de Naive Bayes
+  Authors: Rafael Dominguez
+
+  Args:
+      Clasificador (_type_): Clase padre de clasificador
+
+  """
   def __init__(self, LaPlace: bool = False):
     self.LaPlace = LaPlace  # Guarda si se usa La Place en el entrenamiento
     self.prioris = None     # Guarda los prioris de los datos
@@ -86,7 +93,7 @@ class ClasificadorNaiveBayes (Clasificador):
   def _multinomialNB(self, x_dat: pd.DataFrame, y_dat: pd.DataFrame, idx: int, diccionario: dict):
     """
     Parte del entrenamiento que se encarga de los datos multinomiales para Naive Bayes
-
+    Authors: Rafael Dominguez
     Args:
         x_dat (pd.DataFrame): Con los datos sin la columna clases
         y_dat (pd.DataFrame): Con la columna clases
@@ -116,7 +123,7 @@ class ClasificadorNaiveBayes (Clasificador):
   def _gaussianNB(self, x_dat: pd.DataFrame, y_dat: pd.DataFrame, idx: int, diccionario: dict):
     """
     Parte del entrenamiento que se encarga de los datos gaussianos para Naive Bayes
-
+    Authors: Pablo Sanchez
     Args:
         x_dat (pd.DataFrame): Con los datos sin la columna clases
         y_dat (pd.DataFrame): Con la columna clases
@@ -145,7 +152,7 @@ class ClasificadorNaiveBayes (Clasificador):
   def entrenamiento(self,datosTrain: pd.DataFrame,nominalAtributos,diccionario):
     """
     Entrena para un dataset
-
+    Authors: Pablo Sanchez
     Args:
         datosTrain (pd.DataFrame): Datos para el entrenamiento
         nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
@@ -170,7 +177,7 @@ class ClasificadorNaiveBayes (Clasificador):
   def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
     """
     Determina un dataset dado gracias a los likelihood anteriormente calculados
-
+    Authors: Pablo Sanchez
     Args:
         datosTest (pd.DataFrame): datos para la clasificacion
         nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
@@ -202,6 +209,12 @@ class ClasificadorNaiveBayes (Clasificador):
     return np.asarray(pred, dtype="object")
 
 class ClasificadorNaiveBayesSKLearn(Clasificador):
+  """Clasificador basado en Naive Bayes usando las implementaciones de la librería Sciki-learn
+  Authors: Rafael Dominguez
+
+  Args:
+      Clasificador (_type_): _description_
+  """
   def __init__(self, clasificador, LaPlace=True, prior=True):
     if clasificador == 1:
       self.clasificador = MultinomialNB(alpha=int(LaPlace), fit_prior = prior)
@@ -211,16 +224,37 @@ class ClasificadorNaiveBayesSKLearn(Clasificador):
       self.clasificador = CategoricalNB(alpha=int(LaPlace), fit_prior = prior)
 
   def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos: list, diccionario: dict):
+    """Entrenamiento para un dataset
+    Authors: Rafael Dominguez
+    Args:
+        datosTrain (pd.DataFrame): Datos para el entrenamiento
+        nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
+        diccionario (dict): diccionario de la clase Datos
+    """
     data_wo_lastColumn = datosTrain.iloc[:,:-1] #Data train sin la columna de las clases :(
     data_lastColumn = datosTrain.iloc[:,-1]     #Columna de las classes :)
 
     self.clasificador.fit(data_wo_lastColumn, data_lastColumn)
 
   def clasifica(self,datosTest: pd.DataFrame, nominalAtributos: list, diccionario: dict):
+    """Determina un dataset dado gracias a los likelihood anteriormente calculados
+    Authors: Rafael Dominguez
+    Args:
+        datosTest (pd.DataFrame): datos para la clasificacion
+        nominalAtributos (list): Contiene si un atributo en su columna es nominal o no
+        diccionario (dict): diccionario de la clase Datos
+    Returns:
+        NDArray: Array que contiene los resultados
+    """
     data_wo_lastColumn = datosTest.iloc[:,:-1] #Data train sin la columna de las clases :(
     return self.clasificador.predict(data_wo_lastColumn)
 
 class ClasificadorKNN (Clasificador):
+  """Clasificador basado en KNN
+  Authors: 
+  Args:
+      Clasificador (_type_): _description_
+  """
   def entrenamiento(self,datosTrain,nominalAtributos,diccionario):
     pass
 

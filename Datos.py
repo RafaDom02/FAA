@@ -7,9 +7,23 @@ import numpy as np
 import os
 
 class Datos:
+    """Clase para manipular los datasets 
+    Author: Rafael Dominguez
+    Raises:
+        ValueError: Si el formato del dataset no es correcto
 
-    # Constructor: procesar el fichero para asignar correctamente las variables nominalAtributos, datos y diccionarios
+    """
+
+    
     def __init__(self, nombreFichero): 
+        """Constructor: procesar el fichero para asignar correctamente las variables nominalAtributos, datos y diccionarios
+        Author: Rafael Dominguez
+        Args:
+            nombreFichero (Str): Nombre del fichero a leer
+
+        Raises:
+            ValueError: Si el formato del dataset no es correcto
+        """
         self.diccionarios = {}
         self.nominalAtributos = []
         self.datos = None 
@@ -61,4 +75,10 @@ class Datos:
     
     # Devuelve el subconjunto de los datos cuyos �ndices se pasan como argumento
     def extraeDatos(self,idx) -> pd.DataFrame:
+        """Devuelve el subconjunto de los datos cuyos �ndices se pasan como argumento
+        Author: Pablo Sanchez
+        Args: idx ([int]): Listado con los índices que queremos obtener del conjunto de datos original
+        Returns:
+            pd.DataFrame: Subconjunto de datos con los índices pasados como argumento
+        """
         return self.datos.iloc[idx]
