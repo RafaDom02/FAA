@@ -208,7 +208,7 @@ class ClasificadorNaiveBayesSKLearn(Clasificador):
     elif clasificador == 2:
       self.clasificador = GaussianNB()
     else:
-       self.clasificador = CategoricalNB(alpha=int(LaPlace), fit_prior = prior)
+      self.clasificador = CategoricalNB(alpha=int(LaPlace), fit_prior = prior)
 
   def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos: list, diccionario: dict):
     data_wo_lastColumn = datosTrain.iloc[:,:-1] #Data train sin la columna de las clases :(
