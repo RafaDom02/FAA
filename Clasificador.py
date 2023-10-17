@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from sklearn.naive_bayes import MultinomialNB, GaussianNB
+from sklearn.naive_bayes import MultinomialNB, GaussianNB, CategoricalNB
 
 from Datos import Datos
 
@@ -202,11 +202,13 @@ class ClasificadorNaiveBayes (Clasificador):
     return np.asarray(pred, dtype="object")
 
 class ClasificadorNaiveBayesSKLearn(Clasificador):
-  def __init__(self, LaPlace=True, multinominal=True):
-    if multinominal:
-      self.clasificador = MultinomialNB(apha = int(LaPlace))
-    else:
+  def __init__(self, clasificador, LaPlace=True, prior=True):
+    if clasificador == 1:
+      self.clasificador = MultinomialNB(alpha=int(LaPlace), fit_prior = prior)
+    elif clasificador == 2:
       self.clasificador = GaussianNB()
+    else:
+       self.clasificador = CategoricalNB(alpha=int(LaPlace), fit_prior = prior)
 
   def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos: list, diccionario: dict):
     data_wo_lastColumn = datosTrain.iloc[:,:-1] #Data train sin la columna de las clases :(
@@ -214,7 +216,7 @@ class ClasificadorNaiveBayesSKLearn(Clasificador):
 
     self.clasificador.fit(data_wo_lastColumn, data_lastColumn)
 
-  def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
+  def clasifica(self,datosTest: pd.DataFrame, nominalAtributos: list, diccionario: dict):
     data_wo_lastColumn = datosTest.iloc[:,:-1] #Data train sin la columna de las clases :(
     return self.clasificador.predict(data_wo_lastColumn)
 
