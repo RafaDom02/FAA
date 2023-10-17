@@ -82,3 +82,20 @@ class Datos:
             pd.DataFrame: Subconjunto de datos con los índices pasados como argumento
         """
         return self.datos.iloc[idx]
+    
+    def calcularMediasDesv(self):
+        """Calcula la media y desviación típica de cada atributo
+        Author: <NAME>"""
+        medias = self.datos.mean()
+        desv_tipicas = self.datos.std()
+        return medias, desv_tipicas
+    
+    def normalizarDatos(self):
+        """Normaliza los datos
+        Author: <NAME>, <NAME>."""
+        medias, desv_tipicas = self.calcularMediasDesv()
+        # self.datos.iloc = (self.datos.iloc - medias) / desv_tipicas
+        for idx, atributo in enumerate(self.nominalAtributos):
+            if atributo == False:
+                self.datos.iloc[:,idx] = (self.datos.iloc[:,idx] - medias[idx]) / desv_tipicas[idx]
+                
