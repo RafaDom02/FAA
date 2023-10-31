@@ -34,7 +34,6 @@ class KMeans:
                     nuevos_centroids.append(self.centroids[i])
             nuevos_centroids = np.array(nuevos_centroids)
 
-            #TODO: pillar una comprobacion que no sea tan exacta
             if np.all(self.centroids == nuevos_centroids):
                 break
             self.centroids = nuevos_centroids
