@@ -5,8 +5,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from sklearn.calibration import LabelEncoder
 
 from sklearn.naive_bayes import MultinomialNB, GaussianNB, CategoricalNB
+from sklearn.neighbors import KNeighborsClassifier
+
 
 from Datos import Datos
 
@@ -258,7 +261,7 @@ class ClasificadorKNN (Clasificador):
   Args:
       Clasificador (_type_): _description_
   """
-  def __init__(self, k: int) -> Any:
+  def __init__(self, k = 3) -> Any:
     self.k = k
 
   def _euclidean_distance(self, line_test: np.ndarray, row_train: int):
@@ -304,3 +307,24 @@ class ClasificadorKNN (Clasificador):
       pred.append(most_common)
 
     return np.asarray(pred, dtype="object")
+  
+class ClasificadorKNNSKLearn(Clasificador):
+  def __init__(self, k=3):
+      self.k = k
+      self.model = KNeighborsClassifier(n_neighbors=k)
+
+  def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos, diccionario):
+      # Separa las características de la variable objetivo
+      X = datosTrain.iloc[:, :-1]
+      y = datosTrain.iloc[:, -1]
+
+      # Entrena el modelo KNN
+      self.model.fit(X, y)
+
+  def clasifica(self, datosTest: pd.DataFrame, nominalAtributos, diccionario):
+      
+      # Realiza la clasificación con el modelo KNN
+      X_test = datosTest.iloc[:, :-1]
+      y_pred = self.model.predict(X_test)
+
+      return np.asarray(y_pred, dtype="object")

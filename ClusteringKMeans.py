@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 class ClusteringKMeans:
     def __init__(self, k: int, max_iteraciones: int = 100):
@@ -41,7 +42,27 @@ class ClusteringKMeans:
             iteracion += 1
 
         return clusters
-    
+
+class ClusteringKMeansSKLearn:
+    def __init__(self, k: int, max_iteraciones: int = 100):
+        self.k = k
+        self.max_iteraciones = max_iteraciones
+        self.kmeans = None
+
+    def clasifica(self, datos: pd.DataFrame):
+        # Inicializar y entrenar el modelo K-Means
+        self.kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iteraciones)
+        self.kmeans.fit(datos)
+
+        # Obtener las etiquetas de clúster para cada punto de datos
+        labels = self.kmeans.labels_
+
+        # Crear un diccionario para almacenar los puntos de datos en cada clúster
+        clusters = {i: [] for i in range(self.k)}
+        for i, label in enumerate(labels):
+            clusters[label].append(datos.values[i])
+
+        return clusters
 
 if __name__ == '__main__':
 
