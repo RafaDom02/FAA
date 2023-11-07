@@ -3,6 +3,10 @@ import pandas as pd
 from sklearn.cluster import KMeans
 
 class ClusteringKMeans:
+    """
+    Author:
+        Rafael Dominguez Saez
+    """
     def __init__(self, k: int, max_iteraciones: int = 100):
         self.k = k
         self.max_iteraciones = max_iteraciones
@@ -12,6 +16,15 @@ class ClusteringKMeans:
         return np.sqrt(np.sum((x1 - x2) ** 2))
 
     def clasifica(self, datos: pd.DataFrame):
+        """
+        Clasificador del kmeans
+
+        Args:
+            datos (pd.DataFrame): Datos a los que clasificar con Kmeans
+
+        Returns:
+            Clusters: Clusters con los puntos de cada centroide
+        """        
         self.centroids = datos.sample(n=self.k).values
         iteracion = 0
 
@@ -44,6 +57,10 @@ class ClusteringKMeans:
         return clusters
 
 class ClusteringKMeansSKLearn:
+    """
+    Author:
+        Pablo Sánchez Fernández del Pozo
+    """
     def __init__(self, k: int, max_iteraciones: int = 100):
         self.k = k
         self.max_iteraciones = max_iteraciones

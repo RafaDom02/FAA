@@ -258,8 +258,6 @@ class ClasificadorNaiveBayesSKLearn(Clasificador):
 class ClasificadorKNN (Clasificador):
   """Clasificador basado en KNN
   Authors: Rafael Dominguez
-  Args:
-      Clasificador (_type_): _description_
   """
   def __init__(self, k = 3) -> Any:
     self.k = k
@@ -289,6 +287,18 @@ class ClasificadorKNN (Clasificador):
     return
 
   def clasifica(self,datosTest: pd.DataFrame,nominalAtributos,diccionario):
+    """
+    Clasifica los datos dados usando KNN
+
+    Author:
+        Rafael Dominguez Saez
+    
+    Args:
+        datosTest (pd.DataFrame): Datos ha clasificar
+        nominalAtributos (_type_): No usado
+        diccionario (_type_): No usado
+
+    """    
     data_wo_lastColumn = datosTest.iloc[:,:-1] #Data train sin la columna de las clases :(
     pred = []
 
@@ -309,6 +319,10 @@ class ClasificadorKNN (Clasificador):
     return np.asarray(pred, dtype="object")
   
 class ClasificadorKNNSKLearn(Clasificador):
+  """
+  Author:
+      Pablo Sánchez Fernández del Pozo
+  """
   def __init__(self, k=3):
       self.k = k
       self.model = KNeighborsClassifier(n_neighbors=k)
@@ -322,7 +336,6 @@ class ClasificadorKNNSKLearn(Clasificador):
       self.model.fit(X, y)
 
   def clasifica(self, datosTest: pd.DataFrame, nominalAtributos, diccionario):
-      
       # Realiza la clasificación con el modelo KNN
       X_test = datosTest.iloc[:, :-1]
       y_pred = self.model.predict(X_test)

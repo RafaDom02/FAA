@@ -97,5 +97,5 @@ class Datos:
         # self.datos.iloc = (self.datos.iloc - medias) / desv_tipicas
         for idx, atributo in enumerate(self.nominalAtributos):
             if atributo == False:
-                self.datos.iloc[:,idx] = (self.datos.iloc[:,idx] - medias[idx]) / desv_tipicas[idx]
+                self.datos.iloc[:,idx] = (self.datos.iloc[:,idx] - medias.iloc[idx]) / desv_tipicas.iloc[idx]
                 
