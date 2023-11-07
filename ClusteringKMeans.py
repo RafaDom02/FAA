@@ -50,17 +50,16 @@ class ClusteringKMeansSKLearn:
         self.kmeans = None
 
     def clasifica(self, datos: pd.DataFrame):
-        # Inicializar y entrenar el modelo K-Means
-        self.kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iteraciones)
+        self.kmeans = KMeans(n_clusters=self.k, max_iter=self.max_iteraciones, n_init=10)
         self.kmeans.fit(datos)
 
-        # Obtener las etiquetas de clúster para cada punto de datos
         labels = self.kmeans.labels_
 
-        # Crear un diccionario para almacenar los puntos de datos en cada clúster
         clusters = {i: [] for i in range(self.k)}
         for i, label in enumerate(labels):
             clusters[label].append(datos.values[i])
+
+        self.centroids = self.kmeans.cluster_centers_
 
         return clusters
 
