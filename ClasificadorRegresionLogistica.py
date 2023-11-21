@@ -12,29 +12,27 @@ class ClasificadorRegresionLogistica(Clasificador):
         self.constA = constA
 
     def _sigmoid(self, x: int):
-        if x >= 0:
-            return 1 / (1 + math.exp(-x))
-        else:
-            return 1 / (1 + math.exp(x))
+        z = np.dot(x, self.weights)
+        return 1 / (1 + np.exp(-z))
         
     def entrenamiento(self, datosTrain: pd.DataFrame, nominalAtributos, diccionario):
         
-        x_train = datosTrain.iloc[:, :-1]
-        y_train = datosTrain.iloc[:, -1]
+        x_train = datosTrain.iloc[:, :-1].values
+        y_train = datosTrain.iloc[:, -1].values
         
         self.weights = np.array([random.uniform(-0.5, 0.5) for _ in range(x_train.shape[1])])
 
         for _ in range(self.epocas):
             for j in range(x_train.shape[0]):
-                prediction = self._sigmoid(np.dot(x_train.iloc[j], self.weights))
-                self.weights -= self.constA * x_train.iloc[j] * (prediction - y_train.iloc[j])
+                prediction = self._sigmoid(x_train[j])
+                self.weights -= self.constA * x_train[j] * (prediction - y_train[j])
             
 
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
-        data_wo_lastColumn = datosTest.iloc[:,:-1]
+        data_wo_lastColumn = datosTest.iloc[:,:-1].values
         pred = []
         for i in range(data_wo_lastColumn.shape[0]):
-            sigma = self._sigmoid(np.dot(data_wo_lastColumn.iloc[i], self.weights))
+            sigma = self._sigmoid(data_wo_lastColumn[i])
 
             if sigma >= 0.5:
                 result = 1
