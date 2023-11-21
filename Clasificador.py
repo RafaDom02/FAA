@@ -75,6 +75,80 @@ class Clasificador:
       errores.append(error)
     
     return errores
+  
+  def analisis_ROC(self, particionado, dataset: Datos, clasificadores: list, seed=None):
+    """
+    Hace el analisis roc dada una lista de clasificadores
+
+    Args:
+        particionado (Particion): Particionado con el que se hará el análisis roc
+        dataset (Datos): Dataset con los datos a analizar
+        clasificadores (list): lista de clasificadores
+        seed (int, optional): Numero para generacion aleatoria. Defaults to None.
+
+    Returns:
+        Lista de listas: Cada lista contiene el orden el tn, tp, fn y fp de cada clasificador
+    """    
+    res = []
+    random.seed(seed)
+    particionado.creaParticiones(dataset.datos,seed)
+    for clasificador in clasificadores:
+      tp = fp = fn = tn = 0
+      for part in particionado.particiones:
+        datTrain = dataset.extraeDatos(part.indicesTrain)
+        datTest = dataset.extraeDatos(part.indicesTest)
+
+        clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionarios)
+        pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionarios)
+
+        for i in range(len(pred)):
+          if pred[i] == datTest.iloc[:, -1].iloc[i] and pred[i] == 0:
+            tn+=1
+          elif pred[i] == datTest.iloc[:, -1].iloc[i] and pred[i] == 1:
+            tp+=1
+          elif pred[i] != datTest.iloc[:, -1].iloc[i] and pred[i] == 0:
+            fn+=1
+          else:
+            fp+=1
+      res.append([tn,tp,fn,fp])
+    return res
+  
+  def curva_ROC(self, particionado, dataset: Datos, clasificador, seed= None):
+    """
+    Genera los datos para una curva ROC de la Regresion Logistica
+
+    Args:
+        particionado (Particion): Particionado con el que se hará la curva roc
+        dataset (Datos): Dataset con los datos a analizar
+        clasificador (ClasificadorRegresionLogistica): debe ser el clasificador Regresion Logistica
+        seed (int, optional): Numero para generacion aleatoria. Defaults to None.
+
+    Returns:
+        Tuple: Devuelve una tupla con los valores tp y fp de cada una de las filas del dataset
+    """    
+    tp = []
+    fp = []
+    random.seed(seed)
+    particionado.creaParticiones(dataset.datos,seed)
+    for part in particionado.particiones:
+      datTrain = dataset.extraeDatos(part.indicesTrain)
+      datTest = dataset.extraeDatos(part.indicesTest)
+      
+      clasificador.entrenamiento(datTrain,dataset.nominalAtributos, dataset.diccionarios)
+      pred = clasificador.clasifica(datTest,dataset.nominalAtributos, dataset.diccionarios)
+
+      for i in range(len(pred)):
+        if pred[i] == datTest.iloc[:, -1].iloc[i] and pred[i] == 1:
+          tp.append(1)
+        else:
+          tp.append(0)
+        if pred[i] != datTest.iloc[:, -1].iloc[i] and pred[i] == 1:
+          fp.append(1)
+        else:
+          fp.append(0)
+    return (tp, fp)
+
+
 
 class ClasificadorNaiveBayesSKLearn(Clasificador):
   """Clasificador basado en Naive Bayes usando las implementaciones de la librería Sciki-learn

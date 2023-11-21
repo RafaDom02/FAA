@@ -56,6 +56,7 @@ class ValidacionSimple(EstrategiaParticionado):
     """
 
     super().__init__()
+    self.particiones = []
     self.numeroEjecuciones = numeroEjecuciones
     self.proporcionTest = proporcionTest
     

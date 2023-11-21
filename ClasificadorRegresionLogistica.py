@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 
 class ClasificadorRegresionLogistica(Clasificador):
-    def __init__(self, epocas: int = 100, constA: float = 1) -> Any:
+    def __init__(self, epocas: int = 10, constA: float = 1) -> Any:
         self.epocas = epocas
         self.weights = []
         self.constA = constA
@@ -35,6 +35,7 @@ class ClasificadorRegresionLogistica(Clasificador):
         pred = []
         for i in range(data_wo_lastColumn.shape[0]):
             sigma = self._sigmoid(np.dot(data_wo_lastColumn.iloc[i], self.weights))
+
             if sigma >= 0.5:
                 result = 1
             else:
