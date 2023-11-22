@@ -32,11 +32,11 @@ class ClasificadorGenetico(Clasificador):
             Genera una poblacion de individuos con sus propias reglas
         """        
         self.population = []
-        for _ in self.numPopulation:
+        for _ in range(self.numPopulation):
             individial = []
 
             n_rules = random.randint(1,self.numRules)
-            for _ in range(len(n_rules)):
+            for _ in range(n_rules):
                 rule = []
                 # Creamos una regla que no sea ni todo 0s ni todo 1s
                 while sum(rule) == 0 or sum(rule) == len(rule):
