@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import random
 from Clasificador import Clasificador
@@ -17,58 +18,60 @@ class ClasificadorGenetico(Clasificador):
         self.mutation_prob = mutation_prob
         self.bitmut_prob = bitmut_prob
 
+    def __isTrue(self, ruleIndividual, ruleLine) -> bool:
+        for i in range(len(ruleIndividual)-1):
+            if ruleIndividual[i] != 0:
+                if ruleIndividual[i] == ruleLine[i]:
+                    return False
+        return True
+
+    def __parents_selection(self, fitness_list):
+        #TODO: selecciona los padres
+        pass
+
+
     def __elitism(self, fitness_list: list) -> list:
-        #TODO: coge los individuos mejores predictores, y los saca de la poblacion.
-        num_elits = int(len(fitness_list)*self.elit_prob)
+        #TODO: coge los individuos mejores predictores, y los saca de la poblacion. REVISAR POR SI ACASO
+        num_elits = math.ceil(len(fitness_list)*self.elit_prob)
         elite_list = []
 
+        fitness_list_copy = copy.deepcopy(fitness_list)
+
         for _ in num_elits:
-            elit = max(fitness_list)
-            elit_index = fitness_list.index(elit)
+            elit = max(fitness_list_copy)
+            elit_index = fitness_list_copy.index(elit)
             elite_list.append(elit_index)
-            fitness_list.remove(elit)
+            fitness_list_copy.remove(elit)
 
         return elite_list
 
-    def __predict(self, data: np.ndarray, individual: list, diccionario: dict):
-        
-        dict_list = list(diccionario.items())[:-1]  # Obtenemos una lista del contenido
-                                                    # del diccionario excepto el ultimo elemento
-
+    def __predict(self, line: np.ndarray, individual: list):
+        #TODO: REVISAR y ARREGLAR, solo funciona con datos en binario
+        # Esto solo funciona por ahora con xor ya que cada linea del xor ya esta en binario
         predicted_classes = []
+        predicted_rules = []
         for rule in individual:
-            print("="*20, f"{rule}", "="*20)
-            idx = 0
-            aux = 1
-            for j in range(len(dict_list)):
-                print("="*10, f"{j}", "="*10)
-                n_subdict = len(dict_list[j])
-                data = data.astype(int)
-                rule_np = np.array(rule)
-                matches = np.bitwise_and(data[idx:idx+n_subdict], rule_np[idx:idx+n_subdict])
-                if sum(matches) == 0:
-                    print("Nop")
-                    aux = 0
-                    break
-                print("Sip")
-                idx += n_subdict
-            if aux == 1:
-                predicted_classes.append(rule[-1])
+            if self.__isTrue(rule, line):
+                predicted_rules.append(rule[-1])
 
-        print(f"{sum(predicted_classes)} ? {len(predicted_classes)}")
+        if not predicted_rules:
+            return None
+        
+        counts = np.bincount(predicted_rules)
+        predicted_classes.append(np.argmax(counts))
+
+        #print(f"{sum(predicted_classes)} ? {len(predicted_classes)}")
 
         if sum(predicted_classes) > len(predicted_classes)/2:
-            print(f"{sum(predicted_classes)} > {len(predicted_classes)}")
-            print("a")
+            #print(f"{sum(predicted_classes)} > {len(predicted_classes)}")
             return 1
         elif sum(predicted_classes) < len(predicted_classes)/2:
-            print(f"{sum(predicted_classes)} < {len(predicted_classes)}")
-            print("b")
+            #print(f"{sum(predicted_classes)} < {len(predicted_classes)}")
             return 0
 
         return None
 
-    def __fitness(self, xdata: np.ndarray , ydata: np.ndarray, diccionario: dict):
+    def __fitness(self, xdata: np.ndarray , ydata: np.ndarray):
         
         #TODO: por cada una de las lineas de xdata, se predice el resultado y se añade a una lista, se
         #      devolverá la tasa de error del individuo
@@ -78,7 +81,7 @@ class ClasificadorGenetico(Clasificador):
             for i in range(xdata.shape[0]):
                 data = xdata[i,:]
 
-                pred = self.__predict(data, ind, diccionario)
+                pred = self.__predict(data, ind)
 
                 if pred == ydata[i]:
                     correct += 1
@@ -107,7 +110,7 @@ class ClasificadorGenetico(Clasificador):
         x_train = datosTrain.iloc[:, :-1].values
         y_train = datosTrain.iloc[:, -1].values
 
-        hight, width = x_train.shape
+        _, width = x_train.shape
 
         self.rules_length = width+1
 
@@ -115,10 +118,18 @@ class ClasificadorGenetico(Clasificador):
 
         for _ in range(self.epoches):
 
-            fitness_list = self.__fitness(x_train, y_train, diccionario)
+            fitness_list = self.__fitness(x_train, y_train)
 
-            #self.__elitism(fitness_list)
-        print(fitness_list)
+            elit_index_list = self.__elitism(fitness_list)
+            print(fitness_list)
+            
+            # Obtenemos los padres
+
+            #Crossover: cruce a partir de los padres crear nuevas soluciones
+
+            #Mutations: los padres reciben mutaciones
+
+            #La poblacion pasa a ser una nueva 
 
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         pass
