@@ -7,14 +7,14 @@ from typing import Any
 import pandas as pd
 
 class ClasificadorGenetico(Clasificador):
-    def __init__(self, numPopulation: int =50,  epoches: int = 50, numRules: int = 5, \
-                elit_prob: float = 0.05, roule_prob: float = 0.02, mutation_prob: float = 0.05, \
+    def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, \
+                elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
                 bitmut_prob: float = 0.15) -> Any:
         self.numPopulation = numPopulation
         self.epoches = epoches
         self.numRules = numRules
         self.elit_prob = elit_prob
-        self.roule_prob = roule_prob
+        self.cross_prob = cross_prob
         self.mutation_prob = mutation_prob
         self.bitmut_prob = bitmut_prob
 
@@ -27,8 +27,49 @@ class ClasificadorGenetico(Clasificador):
 
     def __parents_selection(self, fitness_list):
         #TODO: selecciona los padres
-        pass
 
+        # de la lista fitness, hacemos la suma de sus elementos 
+        # y calculamos el peso de cada uno de los elementos
+        # -> ((fitness elemento)/(suma fitness elementos))
+
+        # con np.random.choice obtenemos de la lista self.individuals
+        # los padres teniendo en cuenta cada peso calculado antes
+        return np.random.choice(None)
+
+    def __crossover(self, parents):
+        #TODO: hace el crossover
+
+        descendents = []
+        # Para cada uno de los padres, se seleccionan 2
+            # tiramos un np.random.choice para ver si se hace el crossover
+            # (teniendo en cuenta self.cross_prob)
+
+            # si sale que se hace crossover ya decides tu si se hace inter o intra
+            # y ponemos los descendientes en la lista de descendientes (mucha suerte con esto)
+
+            # en caso de no hacerse crossover se devuelven los padres
+        return descendents
+    
+    def __bitflip_mutation(self, parents):
+        #TODO: mutacion de reglas con el bitflip
+
+        # para cada individuo de los padres
+            # por cada una de las reglas de los padres
+                # por cada bit de una regla
+                    # se hace np.random.choice para ver si se hace flip del bit
+                    # con self.bitflip_prob
+        return parents
+
+    def __rule_mutation(self, parents):
+        #TODO: añade o elimina una regla a los padres
+
+        # mah o menoh parecio al bitflip_mutation pero mas chungo
+        return parents
+
+    def __mutation(self, parents):
+        descendents = self.__bitflip_mutation(parents)
+        descendents = self.__rule_mutation(descendents)
+        return descendents
 
     def __elitism(self, fitness_list: list) -> list:
         #TODO: coge los individuos mejores predictores, y los saca de la poblacion. REVISAR POR SI ACASO
@@ -46,7 +87,7 @@ class ClasificadorGenetico(Clasificador):
         return elite_list
 
     def __predict(self, line: np.ndarray, individual: list):
-        #TODO: REVISAR y ARREGLAR, solo funciona con datos en binario
+        #TODO: REVISAR y ARREGLAR, solo funciona con datos en binario, esto lo hago yo
         # Esto solo funciona por ahora con xor ya que cada linea del xor ya esta en binario
         predicted_classes = []
         predicted_rules = []
@@ -123,13 +164,20 @@ class ClasificadorGenetico(Clasificador):
             elit_index_list = self.__elitism(fitness_list)
             print(fitness_list)
             
-            # Obtenemos los padres
+            #TODO: Parents_selection: Obtenemos los padres
+            parents = self.__parents_selection(fitness_list)
 
-            #Crossover: cruce a partir de los padres crear nuevas soluciones
+            #TODO: Crossover: cruce a partir de los padres crear nuevas soluciones
+            parents = self.__crossover(parents)
 
-            #Mutations: los padres reciben mutaciones
+            #TODO: Mutations: los padres reciben mutaciones
+            descendants = self.__mutation(parents)
 
-            #La poblacion pasa a ser una nueva 
+            #TODO: Survivors: purga de los malardos (union de progenitores y elite)
+            survivors = descendants
+
+            #TODO: Los supervivientes pasa a ser una nueva poblacion
+            self.population = survivors
 
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         pass
