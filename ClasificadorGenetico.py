@@ -34,7 +34,9 @@ class ClasificadorGenetico(Clasificador):
 
         # con np.random.choice obtenemos de la lista self.individuals
         # los padres teniendo en cuenta cada peso calculado antes
-        return np.random.choice(None)
+
+        # devolvemos los padres
+        pass #No entiendo que es lo que hay que hacer aqui
 
     def __crossover(self, parents):
         #TODO: hace el crossover
@@ -48,6 +50,26 @@ class ClasificadorGenetico(Clasificador):
             # y ponemos los descendientes en la lista de descendientes (mucha suerte con esto)
 
             # en caso de no hacerse crossover se devuelven los padres
+        
+        # Pair in tuples all parents in a random way
+        PairsOfParents = np.random.choice(parents, size=(len(parents)//2, 2), replace=False)
+        for padre1, padre2 in PairsOfParents:
+            #get random number from 0 to 1 and check if its less than cross_prob
+            if random.random() < self.cross_prob:
+                #get random number from 0 to numRules
+                cross_point = random.randint(0, self.numRules)
+                #intra crossover
+                if random.random() < 0.5:
+                    descendents.append(padre1[:cross_point] + padre2[cross_point:])
+                    descendents.append(padre2[:cross_point] + padre1[cross_point:])
+                #inter crossover
+                else:
+                    descendents.append(padre1[:cross_point] + padre2[cross_point:])
+                    descendents.append(padre2[:cross_point] + padre1[cross_point:])
+            else:
+                descendents.append(padre1)
+                descendents.append(padre2)
+
         return descendents
     
     def __bitflip_mutation(self, parents):
@@ -58,12 +80,31 @@ class ClasificadorGenetico(Clasificador):
                 # por cada bit de una regla
                     # se hace np.random.choice para ver si se hace flip del bit
                     # con self.bitflip_prob
+                    # si se hace flip se hace el flip del bit
+
+        for individuo in parents:
+            for regla in individuo:
+                for bit in regla:
+                    if random.random() < self.bitmut_prob:
+                        bit = 1 - bit
         return parents
+
 
     def __rule_mutation(self, parents):
         #TODO: añade o elimina una regla a los padres
 
         # mah o menoh parecio al bitflip_mutation pero mas chungo
+        # para cada individuo de los padres
+            # se hace np.random.choice para ver si se añade o se elimina una regla
+            # con self.mutation_prob
+            # si se añade una regla se añade una regla con np.random.choice
+            # si se elimina una regla se elimina una regla con np.random.choice
+        for individuo in parents:
+            if random.random() < self.mutation_prob:
+                if random.random() < 0.5: #add rule
+                    individuo.append(np.random.choice([0,1], k=self.rules_length))
+                else: #remove rule
+                    individuo.pop(np.random.choice(len(individuo)))
         return parents
 
     def __mutation(self, parents):
@@ -182,3 +223,8 @@ class ClasificadorGenetico(Clasificador):
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         pass
 
+
+
+if __name__ == "__main__":
+    generic = ClasificadorGenetico()
+    print(generic.__parents_selection())
