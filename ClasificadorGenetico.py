@@ -36,7 +36,21 @@ class ClasificadorGenetico(Clasificador):
         # los padres teniendo en cuenta cada peso calculado antes
 
         # devolvemos los padres
-        pass #No entiendo que es lo que hay que hacer aqui
+
+        # Calcula la suma total de los valores de fitness
+        total_fitness = sum(fitness_list)
+
+        # Calcula los pesos relativos de cada individuo
+        weights = [fitness / total_fitness for fitness in fitness_list]
+
+        # Selecciona dos padres usando np.random.choice con los pesos calculados
+        selected_parents_indices = np.random.choice(len(self.individuals), size=2, p=weights)
+
+        # Obtiene los individuos correspondientes a los índices seleccionados
+        parent1 = self.individuals[selected_parents_indices[0]]
+        parent2 = self.individuals[selected_parents_indices[1]]
+
+        return parent1, parent2
 
     def __crossover(self, parents):
         #TODO: hace el crossover
