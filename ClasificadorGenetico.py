@@ -7,12 +7,13 @@ from typing import Any
 import pandas as pd
 
 class ClasificadorGenetico(Clasificador):
-    def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, \
+    def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, rules_length = 5, \
                 elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
                 bitmut_prob: float = 0.15) -> Any:
         self.numPopulation = numPopulation
         self.epoches = epoches
         self.numRules = numRules
+        self.rules_length = rules_length
         self.elit_prob = elit_prob
         self.cross_prob = cross_prob
         self.mutation_prob = mutation_prob
@@ -32,7 +33,7 @@ class ClasificadorGenetico(Clasificador):
         # y calculamos el peso de cada uno de los elementos
         # -> ((fitness elemento)/(suma fitness elementos))
 
-        # con np.random.choice obtenemos de la lista self.individuals
+        # con np.random.choice obtenemos de la lista self.population
         # los padres teniendo en cuenta cada peso calculado antes
 
         # devolvemos los padres
@@ -42,13 +43,13 @@ class ClasificadorGenetico(Clasificador):
 
         # Calcula los pesos relativos de cada individuo
         weights = [fitness / total_fitness for fitness in fitness_list]
-
+        print(weights)
         # Selecciona dos padres usando np.random.choice con los pesos calculados
-        selected_parents_indices = np.random.choice(len(self.individuals), size=2, p=weights)
+        selected_parents_indices = np.random.choice(len(self.population), size=2, p=weights)
 
         # Obtiene los individuos correspondientes a los índices seleccionados
-        parent1 = self.individuals[selected_parents_indices[0]]
-        parent2 = self.individuals[selected_parents_indices[1]]
+        parent1 = self.population[selected_parents_indices[0]]
+        parent2 = self.population[selected_parents_indices[1]]
 
         return parent1, parent2
 
@@ -237,8 +238,25 @@ class ClasificadorGenetico(Clasificador):
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         pass
 
+    def prueba(self):
+        self.__populate()
+        for i in self.population:
+            print(i)
+        self.__parents_selection([0.1, 0.2, 0.3, 0.4])
+        for i in self.population:
+            print(i)
+        self.__crossover(self.population)
+        for i in self.population:
+            print(i)
+        self.__bitflip_mutation(self.population)
+        for i in self.population:
+            print(i)
 
 
 if __name__ == "__main__":
-    generic = ClasificadorGenetico()
-    print(generic.__parents_selection())
+    genetic = ClasificadorGenetico(numPopulation = 5)
+    genetic.prueba()
+    
+    #numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, rules_length = 5, \
+    #elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
+    #bitmut_prob: float = 0.15
