@@ -38,20 +38,19 @@ class ClasificadorGenetico(Clasificador):
 
         # devolvemos los padres
 
+        # La elite pasa directamente a la siguiente generacion
+        elite_size = math.ceil(self.elit_prob * len(fitness_list))
+
         # Calcula la suma total de los valores de fitness
         total_fitness = sum(fitness_list)
 
         # Calcula los pesos relativos de cada individuo
         weights = [fitness / total_fitness for fitness in fitness_list]
-        print(weights)
+
         # Selecciona dos padres usando np.random.choice con los pesos calculados
-        selected_parents_indices = np.random.choice(len(self.population), size=2, p=weights)
+        selected_parents = random.choices(self.population, weights, k=len(self.population) - elite_size)
 
-        # Obtiene los individuos correspondientes a los índices seleccionados
-        parent1 = self.population[selected_parents_indices[0]]
-        parent2 = self.population[selected_parents_indices[1]]
-
-        return parent1, parent2
+        return selected_parents
 
     def __crossover(self, parents):
         #TODO: hace el crossover
@@ -67,18 +66,36 @@ class ClasificadorGenetico(Clasificador):
             # en caso de no hacerse crossover se devuelven los padres
         
         # Pair in tuples all parents in a random way
-        PairsOfParents = np.random.choice(parents, size=(len(parents)//2, 2), replace=False)
-        for padre1, padre2 in PairsOfParents:
+        random.shuffle(parents)
+        if len(parents) % 2 != 0: #Para el caso de que los padres sean impares
+            soltero = parents.pop()
+            descendents.append(soltero)
+
+        PairsOfParents = list(zip(*[iter(parents)]*2))
+
+        for pareja in PairsOfParents:
+            padre1, padre2 = pareja
             #get random number from 0 to 1 and check if its less than cross_prob
             if random.random() < self.cross_prob:
-                #get random number from 0 to numRules
-                cross_point = random.randint(0, self.numRules)
-                #intra crossover
+                #intra crossover (cambian cachitos de reglas)
                 if random.random() < 0.5:
-                    descendents.append(padre1[:cross_point] + padre2[cross_point:])
-                    descendents.append(padre2[:cross_point] + padre1[cross_point:])
-                #inter crossover
+                    #get random number from 0 to rules_length
+                    cross_point = random.randint(0, self.rules_length-1)
+                    elected_rule = random.randint(0, min(len(padre1), len(padre2))-1)
+                    #split a random rule from padre1 and padre2
+                    aux_rule = padre1[elected_rule][:cross_point] + padre2[elected_rule][cross_point:]
+                    padre1[elected_rule] = aux_rule
+                    descendents.append(padre1)
+
+                    aux_rule = padre2[elected_rule][:cross_point] + padre1[elected_rule][cross_point:]
+                    padre2[elected_rule] = aux_rule
+                    descendents.append(padre2)
+
+                #inter crossover (reglas completas)
                 else:
+                    #get random number from 0 to numRules
+                    cross_point = random.randint(0, self.numRules-1)
+
                     descendents.append(padre1[:cross_point] + padre2[cross_point:])
                     descendents.append(padre2[:cross_point] + padre1[cross_point:])
             else:
@@ -96,7 +113,6 @@ class ClasificadorGenetico(Clasificador):
                     # se hace np.random.choice para ver si se hace flip del bit
                     # con self.bitflip_prob
                     # si se hace flip se hace el flip del bit
-
         for individuo in parents:
             for regla in individuo:
                 for bit in regla:
@@ -116,10 +132,16 @@ class ClasificadorGenetico(Clasificador):
             # si se elimina una regla se elimina una regla con np.random.choice
         for individuo in parents:
             if random.random() < self.mutation_prob:
-                if random.random() < 0.5: #add rule
-                    individuo.append(np.random.choice([0,1], k=self.rules_length))
-                else: #remove rule
+                if random.random() < 0.5 and len(individuo) < self.numRules: #add rule
+                    rule = []
+                    # while sum(rule) == 0 or sum(rule) == len(rule):
+                    while sum(rule) == 0:
+                        rule = random.choices([0,1], k=self.rules_length)
+                    individuo.append(rule)
+                elif len(individuo) > 2: #remove rule
                     individuo.pop(np.random.choice(len(individuo)))
+                    if not isinstance(individuo[0], list):
+                        individuo = [individuo] #Arreglamos si desace la lista de 1 cadena
         return parents
 
     def __mutation(self, parents):
@@ -128,17 +150,19 @@ class ClasificadorGenetico(Clasificador):
         return descendents
 
     def __elitism(self, fitness_list: list) -> list:
-        #TODO: coge los individuos mejores predictores, y los saca de la poblacion. REVISAR POR SI ACASO
+        #TODO: coge los individuos mejores predictores. REVISAR POR SI ACASO
         num_elits = math.ceil(len(fitness_list)*self.elit_prob)
         elite_list = []
 
         fitness_list_copy = copy.deepcopy(fitness_list)
+        population_list_copy = copy.deepcopy(self.population)
 
-        for _ in num_elits:
+        for _ in range(num_elits):
             elit = max(fitness_list_copy)
             elit_index = fitness_list_copy.index(elit)
-            elite_list.append(elit_index)
             fitness_list_copy.remove(elit)
+            elite_list.append(population_list_copy.pop(elit_index))
+
 
         return elite_list
 
@@ -197,7 +221,8 @@ class ClasificadorGenetico(Clasificador):
             for _ in range(n_rules):
                 rule = []
                 # Creamos una regla que no sea ni todo 0s ni todo 1s
-                while sum(rule) == 0 or sum(rule) == len(rule):
+                # while sum(rule) == 0 or sum(rule) == len(rule):
+                while sum(rule) == 0:
                     rule = random.choices([0,1], k=self.rules_length)
 
                 individial.append(rule)
@@ -217,46 +242,39 @@ class ClasificadorGenetico(Clasificador):
 
             fitness_list = self.__fitness(x_train, y_train)
 
-            elit_index_list = self.__elitism(fitness_list)
-            print(fitness_list)
-            
-            #TODO: Parents_selection: Obtenemos los padres
-            parents = self.__parents_selection(fitness_list)
+            elit_list = self.__elitism(fitness_list)
 
+            #TODOParents_selection: Obtenemos los padres
+            parents = self.__parents_selection(fitness_list)
             #TODO: Crossover: cruce a partir de los padres crear nuevas soluciones
             parents = self.__crossover(parents)
-
             #TODO: Mutations: los padres reciben mutaciones
             descendants = self.__mutation(parents)
-
-            #TODO: Survivors: purga de los malardos (union de progenitores y elite)
-            survivors = descendants
+            #TODO: Survivors: purga de los malardos (union de progenitores, descendientes y elite)
+            survivors = descendants + elit_list
 
             #TODO: Los supervivientes pasa a ser una nueva poblacion
             self.population = survivors
 
+        fitness_list = self.__fitness(x_train, y_train)
+
+
+        elit = max(fitness_list)
+        elit_index = fitness_list.index(elit)
+
+        self.theOne = self.population[elit_index]
+        print(self.theOne, elit)
+
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
-        pass
+        x_test = datosTest.iloc[:, :-1].values
 
-    def prueba(self):
-        self.__populate()
-        for i in self.population:
-            print(i)
-        self.__parents_selection([0.1, 0.2, 0.3, 0.4])
-        for i in self.population:
-            print(i)
-        self.__crossover(self.population)
-        for i in self.population:
-            print(i)
-        self.__bitflip_mutation(self.population)
-        for i in self.population:
-            print(i)
+        _, width = x_test.shape
 
+        self.rules_length = width+1
 
-if __name__ == "__main__":
-    genetic = ClasificadorGenetico(numPopulation = 5)
-    genetic.prueba()
-    
-    #numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, rules_length = 5, \
-    #elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
-    #bitmut_prob: float = 0.15
+        predicted = []
+        for data in x_test:
+            predicted.append(self.__predict(data, self.theOne))
+
+        return np.asarray(predicted, dtype="object")
+
