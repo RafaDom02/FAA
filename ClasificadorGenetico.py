@@ -9,7 +9,7 @@ import pandas as pd
 class ClasificadorGenetico(Clasificador):
     def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, \
                 elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
-                bitmut_prob: float = 0.15, math_related_prediction: bool = False) -> Any:
+                bitmut_prob: float = 0.15, math_related_prediction: bool = True) -> Any:
         self.numPopulation = numPopulation
         self.epoches = epoches
         self.numRules = numRules
@@ -27,7 +27,6 @@ class ClasificadorGenetico(Clasificador):
         return True
 
     def __parents_selection(self, fitness_list):
-        #TODO: selecciona los padres
 
         # de la lista fitness, hacemos la suma de sus elementos 
         # y calculamos el peso de cada uno de los elementos
@@ -53,7 +52,6 @@ class ClasificadorGenetico(Clasificador):
         return selected_parents
 
     def __crossover(self, parents):
-        #TODO: hace el crossover
 
         descendents = []
         # Para cada uno de los padres, se seleccionan 2
@@ -105,7 +103,6 @@ class ClasificadorGenetico(Clasificador):
         return descendents
     
     def __bitflip_mutation(self, parents):
-        #TODO: mutacion de reglas con el bitflip
 
         # para cada individuo de los padres
             # por cada una de las reglas de los padres
@@ -122,7 +119,6 @@ class ClasificadorGenetico(Clasificador):
 
 
     def __rule_mutation(self, parents, diccionario):
-        #TODO: añade o elimina una regla a los padres
 
         # mah o menoh parecio al bitflip_mutation pero mas chungo
         # para cada individuo de los padres
@@ -150,7 +146,7 @@ class ClasificadorGenetico(Clasificador):
         return descendents
 
     def __elitism(self, fitness_list: list) -> list:
-        #TODO: coge los individuos mejores predictores. REVISAR POR SI ACASO
+
         num_elits = math.ceil(len(fitness_list)*self.elit_prob)
         elite_list = []
 
@@ -167,8 +163,7 @@ class ClasificadorGenetico(Clasificador):
         return elite_list
 
     def __predict(self, line: np.ndarray, individual: list, diccionario: dict):
-        #TODO: REVISAR y ARREGLAR, solo funciona con datos en binario, esto lo hago yo
-        # Esto solo funciona por ahora con xor ya que cada linea del xor ya esta en binario
+
         predicted_classes = []
         predicted_rules = []
         for rule in individual:
@@ -187,16 +182,12 @@ class ClasificadorGenetico(Clasificador):
         if sum(predicted_classes) > len(predicted_classes)/2:
             #print(f"{sum(predicted_classes)} > {len(predicted_classes)}")
             return 0
-        elif sum(predicted_classes) < len(predicted_classes)/2:
+        else:
             #print(f"{sum(predicted_classes)} < {len(predicted_classes)}")
             return 1
 
-        return None
-
     def __fitness(self, xdata: np.ndarray , ydata: np.ndarray, diccionario):
         
-        #TODO: por cada una de las lineas de xdata, se predice el resultado y se añade a una lista, se
-        #      devolverá la tasa de error del individuo
         fitness_list = []
         for ind in self.population:
             correct = 0
@@ -221,8 +212,7 @@ class ClasificadorGenetico(Clasificador):
             n_rules = random.randint(1,self.numRules)
             for _ in range(n_rules):
                 rule = []
-                # Creamos una regla que no sea ni todo 0s ni todo 1s
-                # while sum(rule) == 0 or sum(rule) == len(rule):
+
                 while sum(rule) == 0:
                     rule = self.__generate_rule(diccionario, None)
 
@@ -266,16 +256,16 @@ class ClasificadorGenetico(Clasificador):
 
             elit_list = self.__elitism(fitness_list)
 
-            #TODOParents_selection: Obtenemos los padres
+            #Parents_selection: Obtenemos los padres
             parents = self.__parents_selection(fitness_list)
-            #TODO: Crossover: cruce a partir de los padres crear nuevas soluciones
+            #Crossover: cruce a partir de los padres crear nuevas soluciones
             parents = self.__crossover(parents)
-            #TODO: Mutations: los padres reciben mutaciones
+            #Mutations: los padres reciben mutaciones
             descendants = self.__mutation(parents, diccionario)
-            #TODO: Survivors: purga de los malardos (union de progenitores, descendientes y elite)
+            #Survivors: purga de los malardos (union de progenitores, descendientes y elite)
             survivors = descendants + elit_list
 
-            #TODO: Los supervivientes pasa a ser una nueva poblacion
+            #Los supervivientes pasa a ser una nueva poblacion
             self.population = survivors
 
         fitness_list = self.__fitness(x_train, y_train, diccionario)
@@ -287,8 +277,8 @@ class ClasificadorGenetico(Clasificador):
             self.theOnes = [self.population[elit_index]]
             print(self.theOnes, elit)
         else:
-            self.theOnes = elit_list
-            print(self.theOnes)
+            #TODO
+            pass
 
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         x_test = datosTest.iloc[:, :-1].values
@@ -299,9 +289,8 @@ class ClasificadorGenetico(Clasificador):
             if self.math_related_prediction:
                 pred.append(self.__predict(data, self.theOnes[0], diccionario))
             else:
-                for elit in self.theOnes:
-                    predicted.append(self.__predict(data, elit, diccionario))
-                pred.append(round(sum(predicted)/len(predicted)))
+                #TODO
+                pass
 
         return np.asarray(pred, dtype="object")
 
