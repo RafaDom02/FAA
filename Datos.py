@@ -41,18 +41,22 @@ class Datos:
         for i in range(len(aux_list)):
             for label in self.diccionarios.keys():
                 if aux_list[i][label] not in self.diccionarios[label]:
-                    if  not (type(aux_list[i][label]) == int or type(aux_list[i][label]) == float) or\
-                        label.casefold() == "Class".casefold():
+                    #if  not (type(aux_list[i][label]) == int or type(aux_list[i][label]) == float) or\
+                    #    label.casefold() == "Class".casefold():
 
                         if i == 0:
                             self.nominalAtributos.append(True)
                         if aux_list[i][label] not in self.diccionarios[label].values():
-                            self.diccionarios[label].update({str(aux_list[i][label]): None})
-                    elif (type(aux_list[i][label]) == int or type(aux_list[i][label])):
-                            if i == 0:
-                                self.nominalAtributos.append(False)
-                    else:
-                        raise ValueError(f"Error en el tipo de dato: {label}")
+                            if (type(aux_list[i][label]) == int or type(aux_list[i][label]) == float) \
+                                and label.casefold() != "Class".casefold():                        ##CAMBIADO
+                                self.diccionarios[label].update({aux_list[i][label]: None})        ##
+                            else:                                                                  ##
+                                self.diccionarios[label].update({str(aux_list[i][label]): None})   ##
+                        """elif (type(aux_list[i][label]) == int or type(aux_list[i][label])):
+                                if i == 0:
+                                    self.nominalAtributos.append(False)
+                        else:
+                            raise ValueError(f"Error en el tipo de dato: {label}")"""
         
 
         for label in self.diccionarios.keys():
@@ -60,7 +64,10 @@ class Datos:
             s_keys.sort()
             self.diccionarios[label] = {i: self.diccionarios[label][i] for i in s_keys}    
             for i,key in enumerate(self.diccionarios[label].keys()):
-                self.diccionarios[label][key] = i
+                if type(key) == int or type(key) == float:
+                    self.diccionarios[label][key] = key
+                else:
+                    self.diccionarios[label][key] = i
         
 
         for key in keys:
