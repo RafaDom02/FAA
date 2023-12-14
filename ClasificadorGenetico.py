@@ -102,8 +102,8 @@ class ClasificadorGenetico(Clasificador):
 
         return descendents
     
-    def __bitflip_mutation(self, parents):
-
+    def __bitflip_mutation(self, parents, diccionario):
+        #TODO: midificarlo para que haga el bitflip teniendo en cuenta el diccionario
         # para cada individuo de los padres
             # por cada una de las reglas de los padres
                 # por cada bit de una regla
@@ -120,7 +120,6 @@ class ClasificadorGenetico(Clasificador):
 
     def __rule_mutation(self, parents, diccionario):
 
-        # mah o menoh parecio al bitflip_mutation pero mas chungo
         # para cada individuo de los padres
             # se hace np.random.choice para ver si se añade o se elimina una regla
             # con self.mutation_prob
@@ -128,20 +127,17 @@ class ClasificadorGenetico(Clasificador):
             # si se elimina una regla se elimina una regla con np.random.choice
         for individuo in parents:
             if random.random() < self.mutation_prob:
-                if random.random() < 0.5 and len(individuo) < self.numRules: #add rule
+                if random.random() < 0.5 and len(individuo) < self.numRules:    #add rule
                     rule = []
-                    # while sum(rule) == 0 or sum(rule) == len(rule):
                     while sum(rule) == 0:
                         rule = self.__generate_rule(diccionario)
                     individuo.append(rule)
-                elif len(individuo) > 2: #remove rule
+                elif len(individuo) > 2:                                        #remove rule
                     individuo.pop(np.random.choice(len(individuo)))
-                    if not isinstance(individuo[0], list):
-                        individuo = [individuo] #Arreglamos si desace la lista de 1 cadena
         return parents
 
     def __mutation(self, parents, diccionario):
-        descendents = self.__bitflip_mutation(parents)
+        descendents = self.__bitflip_mutation(parents, diccionario)
         descendents = self.__rule_mutation(descendents, diccionario)
         return descendents
 
@@ -177,13 +173,9 @@ class ClasificadorGenetico(Clasificador):
         counts = np.bincount(predicted_rules)
         predicted_classes.append(np.argmax(counts))
 
-        #print(f"{sum(predicted_classes)} ? {len(predicted_classes)}")
-
-        if sum(predicted_classes) > len(predicted_classes)/2:
-            #print(f"{sum(predicted_classes)} > {len(predicted_classes)}")
+        if sum(predicted_classes) < len(predicted_classes)/2:
             return 0
         else:
-            #print(f"{sum(predicted_classes)} < {len(predicted_classes)}")
             return 1
 
     def __fitness(self, xdata: np.ndarray , ydata: np.ndarray, diccionario):
@@ -214,7 +206,7 @@ class ClasificadorGenetico(Clasificador):
                 rule = []
 
                 while sum(rule) == 0:
-                    rule = self.__generate_rule(diccionario, None)
+                    rule = self.__generate_rule(diccionario)
 
                 individial.append(rule)
 
@@ -235,9 +227,9 @@ class ClasificadorGenetico(Clasificador):
                         rule.append(0)
         else:
             for key in diccionario.keys():
-                lkeys = len(list(diccionario[key].keys()))
-                rule_part = [0]*lkeys
-                rand_index = random.randint(0, lkeys-1)
+                len_lkeys = len(list(diccionario[key].keys()))
+                rule_part = [0]*len_lkeys
+                rand_index = random.randint(0, len_lkeys-1)
                 rule_part[rand_index] = 1
                 rule.extend(rule_part)
         return rule
