@@ -103,15 +103,7 @@ class ClasificadorGenetico(Clasificador):
         return descendents
     
     def __bitflip_mutation(self, parents, diccionario):
-        #TODO: midificarlo para que haga el bitflip teniendo en cuenta el diccionario
-        # para cada individuo de los padres
-            # por cada una de las reglas de los padres
-                # por cada bit de una regla
-                    # se hace np.random.choice para ver si se hace flip del bit
-                    # con self.bitflip_prob
-                    # si se hace flip se hace el flip del bit
-        print("###Antes Bitflip")
-        print(parents)
+        
         for individuo in parents:
             for regla in individuo:
                 indexBegin = 0
@@ -119,15 +111,20 @@ class ClasificadorGenetico(Clasificador):
                 for key in diccionario.keys():
                     lenkeys = len(list(diccionario[key].keys()))
                     indexEnd += lenkeys
+                    #print(len(list(diccionario[key].keys())).__str__() + "-- tamaño de la key")
+                    #print("  "+ indexBegin.__str__() + "-- indexBegin")
+                    #print("  "+str(indexEnd-1) + "-- indexEnd")
+
                     if random.random() < self.bitmut_prob:
-                        i = random.randint(indexBegin, indexEnd-1)
-                        #fill regla[indexBegin, indexEnd] with 0
-                        for j in range(indexBegin, indexEnd-1):
+                        #print(regla)
+                        #print("antes bitflip " + regla[indexBegin:indexEnd-1].__str__() + " " + indexBegin.__str__() + " " + str(indexEnd-1))
+                        i = random.randint(indexBegin, indexEnd - 1)  # Fix here
+                        for j in range(indexBegin, indexEnd):  # Fix here
                             regla[j] = 0
-                        regla[i] = 1 
-                    indexBegin += lenkeys
-        print("///Despues Bitflip")
-        print(parents)
+                        regla[i] = 1
+                        #print("despues bitflip " + regla[indexBegin: indexEnd-1].__str__() + " " + indexBegin.__str__() + " " + str(indexEnd-1))
+
+                    indexBegin = indexEnd 
         return parents
         
     def __rule_mutation(self, parents, diccionario):
