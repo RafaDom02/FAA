@@ -110,14 +110,26 @@ class ClasificadorGenetico(Clasificador):
                     # se hace np.random.choice para ver si se hace flip del bit
                     # con self.bitflip_prob
                     # si se hace flip se hace el flip del bit
+        print("###Antes Bitflip")
+        print(parents)
         for individuo in parents:
             for regla in individuo:
-                for bit in regla:
+                indexBegin = 0
+                indexEnd = 0
+                for key in diccionario.keys():
+                    lenkeys = len(list(diccionario[key].keys()))
+                    indexEnd += lenkeys
                     if random.random() < self.bitmut_prob:
-                        bit = 1 - bit
+                        i = random.randint(indexBegin, indexEnd-1)
+                        #fill regla[indexBegin, indexEnd] with 0
+                        for j in range(indexBegin, indexEnd-1):
+                            regla[j] = 0
+                        regla[i] = 1 
+                    indexBegin += lenkeys
+        print("///Despues Bitflip")
+        print(parents)
         return parents
-
-
+        
     def __rule_mutation(self, parents, diccionario):
 
         # para cada individuo de los padres
