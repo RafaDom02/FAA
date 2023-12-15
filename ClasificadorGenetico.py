@@ -7,9 +7,9 @@ from typing import Any
 import pandas as pd
 
 class ClasificadorGenetico(Clasificador):
-    def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, \
-                elit_prob: float = 0.05, cross_prob: float = 0.02, mutation_prob: float = 0.05, \
-                bitmut_prob: float = 0.15, math_related_prediction: bool = True) -> Any:
+    def __init__(self, numPopulation: int = 50,  epoches: int = 50, numRules: int = 5, elit_prob: float = 0.05, \
+                cross_prob: float = 0.02, mutation_prob: float = 0.05, bitmut_prob: float = 0.15, \
+                math_related_prediction: bool = True, debug_rules: bool = False, debug_fitness: bool = False) -> Any:
         self.numPopulation = numPopulation
         self.epoches = epoches
         self.numRules = numRules
@@ -18,6 +18,8 @@ class ClasificadorGenetico(Clasificador):
         self.mutation_prob = mutation_prob
         self.bitmut_prob = bitmut_prob
         self.math_related_prediction = math_related_prediction
+        self.debug_rules = debug_rules
+        self.debug_fitness = debug_fitness
 
     def __isTrue(self, ruleIndividual, ruleLine) -> bool:
         for i in range(len(ruleIndividual)-2):
@@ -111,18 +113,12 @@ class ClasificadorGenetico(Clasificador):
                 for key in diccionario.keys():
                     lenkeys = len(list(diccionario[key].keys()))
                     indexEnd += lenkeys
-                    #print(len(list(diccionario[key].keys())).__str__() + "-- tamaño de la key")
-                    #print("  "+ indexBegin.__str__() + "-- indexBegin")
-                    #print("  "+str(indexEnd-1) + "-- indexEnd")
 
                     if random.random() < self.bitmut_prob:
-                        #print(regla)
-                        #print("antes bitflip " + regla[indexBegin:indexEnd-1].__str__() + " " + indexBegin.__str__() + " " + str(indexEnd-1))
-                        i = random.randint(indexBegin, indexEnd - 1)  # Fix here
-                        for j in range(indexBegin, indexEnd):  # Fix here
+                        i = random.randint(indexBegin, indexEnd - 1)
+                        for j in range(indexBegin, indexEnd):
                             regla[j] = 0
                         regla[i] = 1
-                        #print("despues bitflip " + regla[indexBegin: indexEnd-1].__str__() + " " + indexBegin.__str__() + " " + str(indexEnd-1))
 
                     indexBegin = indexEnd 
         return parents
@@ -137,9 +133,7 @@ class ClasificadorGenetico(Clasificador):
         for individuo in parents:
             if random.random() < self.mutation_prob:
                 if random.random() < 0.5 and len(individuo) < self.numRules:    #add rule
-                    rule = []
-                    while sum(rule) == 0:
-                        rule = self.__generate_rule(diccionario)
+                    rule = self.__generate_rule(diccionario)
                     individuo.append(rule)
                 elif len(individuo) > 2:                                        #remove rule
                     individuo.pop(np.random.choice(len(individuo)))
@@ -212,10 +206,7 @@ class ClasificadorGenetico(Clasificador):
 
             n_rules = random.randint(1,self.numRules)
             for _ in range(n_rules):
-                rule = []
-
-                while sum(rule) == 0:
-                    rule = self.__generate_rule(diccionario)
+                rule = self.__generate_rule(diccionario)
 
                 individial.append(rule)
 
@@ -250,12 +241,17 @@ class ClasificadorGenetico(Clasificador):
         y_train = datosTrain.iloc[:, -1].values
 
         self.__populate(diccionario)
+        if self.debug_fitness:
+            self.debug_fitness_list = []
 
         for _ in range(self.epoches):
 
             fitness_list = self.__fitness(x_train, y_train, diccionario)
 
             elit_list = self.__elitism(fitness_list)
+
+            if self.debug_fitness:
+                self.debug_fitness_list.append((max(fitness_list), sum(fitness_list)/len(fitness_list)))
 
             #Parents_selection: Obtenemos los padres
             parents = self.__parents_selection(fitness_list)
@@ -271,15 +267,22 @@ class ClasificadorGenetico(Clasificador):
 
         fitness_list = self.__fitness(x_train, y_train, diccionario)
 
+        if self.debug_fitness:
+                self.debug_fitness_list.append((max(fitness_list), sum(fitness_list)/len(fitness_list)))
+
         if self.math_related_prediction:
             elit = max(fitness_list)
             elit_index = fitness_list.index(elit)
 
             self.theOnes = [self.population[elit_index]]
-            print(self.theOnes, elit)
+            if self.debug_rules:
+                print("-Elegido para clasificar->",self.theOnes[0], \
+                      "\n-Porcentaje de aciertos ->", elit)
         else:
-            #TODO
-            pass
+            self.theOnes = self.__elitism(fitness_list)
+            if self.debug_rules:
+                print("-Elegidos para clasificar->",self.theOnes, \
+                      "\n-Porcentaje de aciertos->", sorted(fitness_list,reverse=True)[:math.ceil(self.numPopulation*self.elit_prob)])
 
     def clasifica(self,datosTest: pd.DataFrame,nominalAtributos: list,diccionario: dict):
         x_test = datosTest.iloc[:, :-1].values
@@ -290,8 +293,14 @@ class ClasificadorGenetico(Clasificador):
             if self.math_related_prediction:
                 pred.append(self.__predict(data, self.theOnes[0], diccionario))
             else:
-                #TODO
-                pass
+                for elit in self.theOnes:
+                    result = self.__predict(data, elit, diccionario)
+                    if result is not None:
+                        predicted.append(result)
+                if sum(predicted) >= len(predicted)/2:
+                    pred.append(1)
+                else:
+                    pred.append(0)
 
         return np.asarray(pred, dtype="object")
 
