@@ -22,6 +22,19 @@ class ClasificadorGenetico(Clasificador):
         self.debug_fitness = debug_fitness
 
     def __isTrue(self, ruleIndividual, ruleLine) -> bool:
+        """
+        Author:
+            Rafael Dominguez Saez
+
+        Comprueba si una regla de un individuo con la regla de una linea del dataset
+
+        Args:
+            ruleIndividual (_type_): _description_
+            ruleLine (_type_): _description_
+
+        Returns:
+            bool: _description_
+        """
         for i in range(len(ruleIndividual)-2):
             if ruleIndividual[i] != 0:
                 if ruleIndividual[i] == ruleLine[i]:
@@ -29,15 +42,18 @@ class ClasificadorGenetico(Clasificador):
         return True
 
     def __parents_selection(self, fitness_list):
+        """
+        Author:
+            Rafael Dominguez Saez
 
-        # de la lista fitness, hacemos la suma de sus elementos 
-        # y calculamos el peso de cada uno de los elementos
-        # -> ((fitness elemento)/(suma fitness elementos))
+        Hacemos la selección de los padres haciendo el metodo de la "ruleta".
 
-        # con np.random.choice obtenemos de la lista self.population
-        # los padres teniendo en cuenta cada peso calculado antes
+        Args:
+            fitness_list (_type_): Lista de los fitnesses por individuo
 
-        # devolvemos los padres
+        Returns:
+            list: Lista de los individuos seleccionados para ser los padres 
+        """        
 
         # La elite pasa directamente a la siguiente generacion
         elite_size = math.ceil(self.elit_prob * len(fitness_list))
@@ -54,16 +70,18 @@ class ClasificadorGenetico(Clasificador):
         return selected_parents
 
     def __crossover(self, parents):
+        """
+        Raliza sobre los padres el crossover para generar los descendientes si se cumple la condicion
+        de cross_prob, con igual de condiciones de realizar el intra o inter crossover
+
+        Args:
+            parents (list): Lista de los padres
+
+        Returns:
+            list: descendientes
+        """
 
         descendents = []
-        # Para cada uno de los padres, se seleccionan 2
-            # tiramos un np.random.choice para ver si se hace el crossover
-            # (teniendo en cuenta self.cross_prob)
-
-            # si sale que se hace crossover ya decides tu si se hace inter o intra
-            # y ponemos los descendientes en la lista de descendientes (mucha suerte con esto)
-
-            # en caso de no hacerse crossover se devuelven los padres
         
         # Pair in tuples all parents in a random way
         random.shuffle(parents)
@@ -105,6 +123,19 @@ class ClasificadorGenetico(Clasificador):
         return descendents
     
     def __bitflip_mutation(self, parents, diccionario):
+        """
+        Author:
+            Pablo Sanchez
+
+        Hace la mutacion de un bit en una de las reglas de un individuo
+
+        Args:
+            parents (list): lista de los padres
+            diccionario (dict): diccionario del dataset
+
+        Returns:
+            list: inidividuos tras tener una mutacion
+        """
         
         for individuo in parents:
             for regla in individuo:
@@ -124,12 +155,20 @@ class ClasificadorGenetico(Clasificador):
         return parents
         
     def __rule_mutation(self, parents, diccionario):
+        """
+        Author:
+            Pablo Sanchez
 
-        # para cada individuo de los padres
-            # se hace np.random.choice para ver si se añade o se elimina una regla
-            # con self.mutation_prob
-            # si se añade una regla se añade una regla con np.random.choice
-            # si se elimina una regla se elimina una regla con np.random.choice
+        Hace la mutación añadiendo o eliminando una regla a un individuo
+
+        Args:
+            parents (list): lista de padres
+            diccionario (dict): diccionario del dataset
+
+        Returns:
+            list: individuos tras la mutacion
+        """
+
         for individuo in parents:
             if random.random() < self.mutation_prob:
                 if random.random() < 0.5 and len(individuo) < self.numRules:    #add rule
@@ -140,11 +179,32 @@ class ClasificadorGenetico(Clasificador):
         return parents
 
     def __mutation(self, parents, diccionario):
+        """
+            Author:
+                Pablo Sanchez
+
+        Args:
+            parents (list): lista de los padres
+            diccionario (dict): diccionario del dataset
+
+        Returns:
+            list: lista de descendientes
+        """
         descendents = self.__bitflip_mutation(parents, diccionario)
         descendents = self.__rule_mutation(descendents, diccionario)
         return descendents
 
     def __elitism(self, fitness_list: list) -> list:
+        """
+        Author:
+            Rafael Dominguez
+
+        Args:
+            fitness_list (list): lista de fitnesses de cada uno de los individuos
+
+        Returns:
+            list: mejores individuos de la generación
+        """
 
         num_elits = math.ceil(len(fitness_list)*self.elit_prob)
         elite_list = []
@@ -162,6 +222,18 @@ class ClasificadorGenetico(Clasificador):
         return elite_list
 
     def __predict(self, line: np.ndarray, individual: list, diccionario: dict):
+        """
+        Author:
+            Rafael Dominguez
+
+        Args:
+            line (np.ndarray): linea del dataset
+            individual (list): individuo de la poblacion
+            diccionario (dict): diccionario del dataset
+
+        Returns:
+            Literal[0,1] | None: 0 si predice False, 1 si predice True y None si no es capaz de predecir esa linea
+        """
 
         predicted_classes = []
         predicted_rules = []
@@ -182,6 +254,20 @@ class ClasificadorGenetico(Clasificador):
             return 1
 
     def __fitness(self, xdata: np.ndarray , ydata: np.ndarray, diccionario):
+        """
+        Author:
+            Rafael Dominguez
+
+        Calcula el fitness de cada uno de los individuos de la poblacion y crea la lista fitness
+
+        Args:
+            xdata (np.ndarray): datos del dataset
+            ydata (np.ndarray): columna clase del dataset
+            diccionario (dict): diccionario del dataset
+
+        Returns:
+            list: lista fitness
+        """
         
         fitness_list = []
         for ind in self.population:
@@ -198,7 +284,13 @@ class ClasificadorGenetico(Clasificador):
 
     def __populate(self, diccionario):
         """
-            Genera una poblacion de individuos con sus propias reglas
+        Author:
+            Rafael Dominguez Saez
+
+        Genera una poblacion de individuos con sus propias reglas
+
+        Args:
+            diccionario (dict): diccionario del dataset
         """        
         self.population = []
         for _ in range(self.numPopulation):
@@ -213,6 +305,20 @@ class ClasificadorGenetico(Clasificador):
             self.population.append(individial)
 
     def __generate_rule(self, diccionario:dict, line=None):
+        """
+        Author:
+            Rafael Dominguez
+
+        En caso de dar una linea, crea la rule de esa linea, en caso contrario, genera una regla aleatoria
+
+        Args:
+            diccionario (dict): diccionario del dataset
+            line (list, optional): Linea del dataset. Defaults to None.
+
+        Returns:
+            list: regla creada a partir de la linea o aleatoria
+        """
+
         rule = []
         if line is not None:
             for i,key in enumerate(diccionario.keys()):
